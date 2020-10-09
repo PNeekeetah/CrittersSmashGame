@@ -7,6 +7,7 @@ import time
 import sys
 from scipy import sparse
 import copy
+import os
 
 class BitBoard:
     totalBitBoards = 0
@@ -114,7 +115,37 @@ class BitBoard:
                 if (( 0 <= down) and ( down < self.size**2)):
                     self.board[down] ^= 1
                 self.board[bitPos] ^= 1
-
+                
+    def findAllPossibleTransisitons(self):
+        dirname = os.path.dirname(__file__)
+        pathname = os.path.join(dirname,"FoundTransitions\ ")
+        
+        if (not os.path.exists(pathname)):
+            os.mkdir(pathname)  
+        
+        if ( not os.path.isfile(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz")):
+        
+            for i in range(2**(self.size**2)-1, -1,-1):
+                refBoard = biv.BitVector(intVal = i, size = self.size**2)
+                for j in range (0,self.size**2):
+                    self.board = copy.deepcopy(refBoard)
+                    coords = (j//self.size, j % self.size)                
+                    self.orthogonalWhack(coords[0],coords[1])
+                    if (int(refBoard) != int(self.board)):
+                        self.sparseAdjacencyMatrix[int(refBoard),int(self.board)] = True
+                        
+                        
+            sparse.save_npz(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz",self.sparseAdjacencyMatrix.tocoo())
+            file = open( pathname+str(self.size)+"x"+str(self.size)+"transitions.txt" , "w")
+            file.write( str(self.sparseAdjacencyMatrix) )
+            file.close()
+        else :
+            try:
+                self.sparseAdjacencyMatrix = sparse.load_npz(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz")
+            except IOError as error:
+                print ("File not readable for some reason")
+                
+        
 def main(test = 0):
     
     if (test == 0):
@@ -166,6 +197,16 @@ def main(test = 0):
         # None should change
         placeholder.orthogonalWhack(4,1) 
         placeholder.representBoardAsMatrix()
+        print("\n")
+        lvl0.orthogonalWhack(1,1)
+        lvl0.representBoardAsMatrix()
+        print("\n")
+        lvl0.orthogonalWhack(1,1)
+        lvl0.representBoardAsMatrix()
+    elif (test == 5):
+        size = 4
+        lvl0 = BitBoard(size,False,True)
+        lvl0.findAllPossibleTransisitons()
         
 if __name__ == "__main__":
     print ("0 - Runs Main")
@@ -173,6 +214,7 @@ if __name__ == "__main__":
     print ("2 - Fill Size Comparison Test")
     print ("3 - Board Representation Test")
     print ("4 - Orthogonal Whack Test on a 4 x 4 board")
+    print ("5 - Transitions test")
     test = int(input())
     main(test)
 
