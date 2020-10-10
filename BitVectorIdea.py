@@ -8,6 +8,10 @@ import sys
 from scipy import sparse
 import copy
 import os
+import Node
+import SearchAlgorithm
+from collections import deque 
+
 
 class BitBoard:
     totalBitBoards = 0
@@ -34,14 +38,21 @@ class BitBoard:
         self.ID = BitBoard.getCounter()
     
     # Takes a bit vector and shows it as a matrix
-    def representBoardAsMatrix(self):
-        matrixRepr = np.zeros((self.size,self.size), dtype = bool)
-        for i in range (0,self.size):
-            for j in range(0,self.size):
-                matrixRepr[i,j] = self.board[self.size*i + j]
-        print (matrixRepr)
-        del matrixRepr
-    
+    def representBoardAsMatrix(self, bitBoard = None ):
+        if (bitBoard is None):
+            matrixRepr = np.zeros((self.size,self.size), dtype = bool)
+            for i in range (0,self.size):
+                for j in range(0,self.size):
+                    matrixRepr[i,j] = self.board[self.size*i + j]
+            print (matrixRepr)
+            del matrixRepr
+        elif (type(bitBoard) is biv.BitVector):
+            matrixRepr = np.zeros((self.size,self.size), dtype = bool)
+            for i in range (0,self.size):
+                for j in range(0,self.size):
+                    matrixRepr[i,j] = bitBoard[self.size*i + j]
+            print (matrixRepr)
+            del matrixRepr
     # Assign logic 1 at position x_pos, y_pos
     def assignCritterOnBoard(self, x_pos, y_pos):
         self.board[x_pos*self.size + y_pos] = 1
@@ -67,6 +78,10 @@ class BitBoard:
     # Getter for Sparse Adjacency Matrix
     def getSparseAdjacencyMatrix(self):
         return self.sparseAdjacencyMatrix
+    
+    # Getter for size
+    def getBoardSize(self):
+        return self.size
     
     # Method for testing size
     def printObjectSizeStatistics(self, other = None):
@@ -144,7 +159,6 @@ class BitBoard:
                 self.sparseAdjacencyMatrix = sparse.load_npz(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz")
             except IOError as error:
                 print ("File not readable for some reason")
-                
         
 def main(test = 0):
     
@@ -207,6 +221,39 @@ def main(test = 0):
         size = 4
         lvl0 = BitBoard(size,False,True)
         lvl0.findAllPossibleTransisitons()
+    elif (test == 6):
+        size = 3
+        lvl0 = BitBoard(size,False,True)
+        lvl0.assignCritterOnBoard(0,0)
+        lvl0.assignCritterOnBoard(1,0)
+        lvl0.assignCritterOnBoard(0,2)
+        lvl0.assignCritterOnBoard(2,1)
+        print("Starting State : ")
+        lvl0.representBoardAsMatrix()
+        print("\n")
+        lvl0.findAllPossibleTransisitons()
+        search = SearchAlgorithm.SearchAlgorithm(lvl0.getSparseAdjacencyMatrix().tolil())
+        startNode = Node.Node (int(lvl0.getBitBoard()),None,0)
+        endNode = Node.Node (0,None, -1)
+        fin = search.BFS(startNode,endNode)
+        solution = deque()
+        step = 0
+        lastSol = 0
+        currSol = 0
+        while (fin != None):
+            solution.append(biv.BitVector(intVal = fin.getNumber(), size = (lvl0.getBoardSize())**2))
+            fin = fin.getParent()
+            
+        if (len(solution) == 0):
+            print("This has no solution")
+            
+        while (len(solution) != 0):
+            print("Step: " + str(step))
+            lvl0.representBoardAsMatrix(solution.pop())
+            print("\n")
+            step+=1
+
+        
         
 if __name__ == "__main__":
     print ("0 - Runs Main")
@@ -215,6 +262,7 @@ if __name__ == "__main__":
     print ("3 - Board Representation Test")
     print ("4 - Orthogonal Whack Test on a 4 x 4 board")
     print ("5 - Transitions test")
+    print ("6 - Search Test")
     test = int(input())
     main(test)
 
