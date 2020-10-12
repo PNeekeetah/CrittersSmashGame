@@ -34,7 +34,9 @@ class SearchAlgorithm:
         if (type(sparse) == sparse.lil_matrix):
             self.sparseAdjacency = copy.deepcopy(sparse)
     
+    """
     def BFS (self, startNode, endNode):
+        #print("Distance from origin is : " + str(startNode.getOriginDistance()) )        
         self.visited[int(startNode.getNumber())] = True
         if ( int(startNode.getNumber()) == int(endNode.getNumber()) ):
             return startNode
@@ -43,9 +45,29 @@ class SearchAlgorithm:
         for connection in connections:
             if (self.visited[connection] == False):
                 newNode = Node.Node(int(connection),startNode,startNode.getOriginDistance()+1)
+
                 self.queue.put(newNode)
         if (not self.queue.empty()):
             return self.BFS(self.queue.get(),endNode)
+        else:
+            return None        
+    """
+        
+    def BFS (self, startNode, endNode):
+        self.queue.put(startNode)
+        while (not self.queue.empty()):
+            currentNode = self.queue.get()
+            if ( int(currentNode.getNumber()) == int(endNode.getNumber()) ):
+                return currentNode
+            nonzero = sparse.find(self.sparseAdjacency[currentNode.getNumber()])
+            connections = nonzero[1]
+            for connection in connections:
+                if (self.visited[connection] == False):
+                    newNode = Node.Node(int(connection),currentNode,currentNode.getOriginDistance()+1)
+                    self.queue.put(newNode)
+            
+            self.visited[int(currentNode.getNumber())] = True
+        return None
             
             
         

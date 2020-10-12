@@ -233,6 +233,7 @@ def main(test = 0):
         print("\n")
         lvl0.findAllPossibleTransisitons()
         search = SearchAlgorithm.SearchAlgorithm(lvl0.getSparseAdjacencyMatrix().tolil())
+        
         startNode = Node.Node (int(lvl0.getBitBoard()),None,0)
         endNode = Node.Node (0,None, -1)
         fin = search.BFS(startNode,endNode)
@@ -252,8 +253,32 @@ def main(test = 0):
             lvl0.representBoardAsMatrix(solution.pop())
             print("\n")
             step+=1
-
+            
+    elif (test == 7):
+        size = 3
+        lvl0 = BitBoard(size,False,True)
+        lvl0.findAllPossibleTransisitons()
+        search = SearchAlgorithm.SearchAlgorithm(lvl0.getSparseAdjacencyMatrix().tolil())
+        impossible = 0
+        acceptable = 0
+        for i in range (1,2**(size**2)):
+            print ("Doing for connection " + str(i))
+            bitValue =  biv.BitVector(intVal = i, size = lvl0.getBoardSize()**2)
+            startNode = Node.Node (int(bitValue),None,0)
+            endNode = Node.Node (0, None, -1)
+            fin = search.BFS(startNode,endNode)
+            if (fin is None):
+                impossible += 1
+                print ("Configuration " + str(i) + " is impossible")
+                lvl0.representBoardAsMatrix(bitValue)
+            else:
+                acceptable += 1
+            
+        print ("The number acceptable solutions is :" + str(acceptable))
+        print ("The number of impossible solutions is: " + str(impossible))
         
+                
+            
         
 if __name__ == "__main__":
     print ("0 - Runs Main")
@@ -263,6 +288,7 @@ if __name__ == "__main__":
     print ("4 - Orthogonal Whack Test on a 4 x 4 board")
     print ("5 - Transitions test")
     print ("6 - Search Test")
+    print ("7 - Find if transitions are possible")
     test = int(input())
     main(test)
 
