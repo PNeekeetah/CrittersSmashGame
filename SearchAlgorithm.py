@@ -12,6 +12,7 @@ import BitVector as biv
 import numpy as np
 import copy
 import Node
+from collections import deque  
 
 class SearchAlgorithm:
     
@@ -67,11 +68,12 @@ class SearchAlgorithm:
     def BFS (self, startNode, endNode):
         shape = (sparse.lil_matrix(self.sparseAdjacency)).get_shape()
         visited = np.zeros(shape[0], dtype = bool)
-        waiting = queue.Queue()
-        waiting.put(startNode)
+        waiting = deque()
+        waiting.append(startNode)
         path = []
-        while (not waiting.empty()):        
-            currentNode = waiting.get()
+        currentNode = None
+        while (len(waiting) > 0  ):        
+            currentNode = waiting.popleft()
 
             # Check if current node is the last node
             if ( currentNode == endNode ):
@@ -88,9 +90,13 @@ class SearchAlgorithm:
                 if (visited[connection] == False):
                     newNode = Node.Node(int(connection))
                     newNode.setParent(currentNode)
-                    waiting.put(newNode)            
+                    # Check whether a similar node was added beforehand to queue
+                    if (sum(node.getNumber() == newNode.getNumber() for node in waiting) == 0): 
+                        waiting.append(newNode)
             visited[int(currentNode.getNumber())] = True
-        return (False, [])
+        print ("Total visited nodes until failure " + 
+               str(sum(element == True for element in visited)) )
+        return (False, path)
     
     def reverseBFS (self, endNode):
         self.transposeAdjacency()

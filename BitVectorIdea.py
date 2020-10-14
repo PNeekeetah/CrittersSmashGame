@@ -177,7 +177,7 @@ def convertBoardToString(value,boardSize,bitBoard):
             strVal += (str(arrVal[i,j]) + " ")
     return strVal
 
-def createGraph (gameBoard, allNodes,highlightNode = None, displayNumber = False ) :
+def createGraph (gameBoard, allNodes,highlightNode = None, displayNumber = False , reverse = False) :
     graph = nx.DiGraph()
     boardSize = gameBoard.getBoardSize()
     color_map = []
@@ -203,9 +203,11 @@ def createGraph (gameBoard, allNodes,highlightNode = None, displayNumber = False
             else:
                 graph.add_edge(convertBoardToString(node.getNumber(),boardSize,gameBoard)
                        ,convertBoardToString(node.getParent().getNumber(),boardSize,gameBoard))
+    if (reverse):
+        graph = nx.DiGraph.reverse(graph)
     
     if (displayNumber):
-        nx.draw_kamada_kawai(graph, node_color=color_map, with_labels=True)    
+        nx.draw_kamada_kawai(graph, node_color=color_map, with_labels=True, )    
     else:
         nx.draw_kamada_kawai(graph, node_color=color_map, with_labels=True, node_size=2000)    
     plt.show()
@@ -314,13 +316,17 @@ def main(test = 0):
         lvl0.assignCritterOnBoard(1,1);
         lvl0.findAllPossibleTransisitons()
         search = SearchAlgorithm.SearchAlgorithm(lvl0.getSparseAdjacencyMatrix().tolil())
-        startNode = Node.Node(1)
+        startNode = Node.Node(45019) # starting from node Node.Node(1) fails
         endNode = Node.Node(0)
         highlightNode = Node.Node(int(lvl0.getBitBoard()))
         allNodes = search.reverseBFS(endNode)
         path = search.BFS(startNode,endNode)
         if (size < 4):
             createGraph(lvl0,allNodes,highlightNode,True)   
+        
+        if (len(path[1]) > 0):
+            createGraph(lvl0,path[1],startNode,False,reverse = True)   
+        
         print ("The number acceptable solutions is :" + str(len(allNodes)) + 
                " out of the possible " + str(2**(lvl0.getBoardSize()**2)))
     
@@ -333,7 +339,8 @@ if __name__ == "__main__":
     print ("4 - Orthogonal Whack Test on a 4 x 4 board")
     print ("5 - Transitions test")
     print ("6 - Search Test")
-    print ("7 - Find if transitions are possible")
+    print ("7 - Find all possible sollutions for a 4 x 4 board and attempt"
+           + " to find path from node 45019")
     test = int(input())
     main(test)
 
