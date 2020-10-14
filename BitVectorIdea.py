@@ -11,6 +11,8 @@ import os
 import Node
 import SearchAlgorithm
 from collections import deque 
+import networkx as nx
+import matplotlib.pyplot as plt
 
 
 class BitBoard:
@@ -38,21 +40,25 @@ class BitBoard:
         self.ID = BitBoard.getCounter()
     
     # Takes a bit vector and shows it as a matrix
-    def representBoardAsMatrix(self, bitBoard = None ):
+    def representBoardAsMatrix(self, bitBoard = None, printBoard = False ):
         if (bitBoard is None):
-            matrixRepr = np.zeros((self.size,self.size), dtype = bool)
+            matrixRepr = np.zeros((self.size,self.size), dtype = np.int8)
             for i in range (0,self.size):
                 for j in range(0,self.size):
                     matrixRepr[i,j] = self.board[self.size*i + j]
-            print (matrixRepr)
-            del matrixRepr
+            if (printBoard):
+                print (matrixRepr)
+            return matrixRepr
+        
         elif (type(bitBoard) is biv.BitVector):
-            matrixRepr = np.zeros((self.size,self.size), dtype = bool)
+            matrixRepr = np.zeros((self.size,self.size), dtype = np.int8)
             for i in range (0,self.size):
                 for j in range(0,self.size):
                     matrixRepr[i,j] = bitBoard[self.size*i + j]
-            print (matrixRepr)
-            del matrixRepr
+            if (printBoard):
+                print (matrixRepr)
+            return matrixRepr
+            
     # Assign logic 1 at position x_pos, y_pos
     def assignCritterOnBoard(self, x_pos, y_pos):
         self.board[x_pos*self.size + y_pos] = 1
@@ -160,6 +166,52 @@ class BitBoard:
             except IOError as error:
                 print ("File not readable for some reason")
         
+def convertBoardToString(value,boardSize,bitBoard):
+    bitValue =  biv.BitVector(intVal = value, size = boardSize**2)
+    arrVal = BitBoard.representBoardAsMatrix(bitBoard,bitValue)
+    strVal = ""
+    for i in range (0,boardSize):
+        if (i > 0):
+            strVal += "\n"
+        for j in range (0, boardSize):
+            strVal += (str(arrVal[i,j]) + " ")
+    return strVal
+
+def createGraph (gameBoard, allNodes,highlightNode = None, displayNumber = False ) :
+    graph = nx.DiGraph()
+    boardSize = gameBoard.getBoardSize()
+    color_map = []
+
+    for node in allNodes:
+        if (node.getNumber() == 0):    
+            color_map.append('green')
+        elif (not(highlightNode is None ) and (node == highlightNode)):
+            color_map.append('pink')
+        else: 
+            color_map.append('blue')
+        if (displayNumber):
+            graph.add_node(node.getNumber());
+        else:    
+            strVal = convertBoardToString(node.getNumber(),boardSize,gameBoard)
+            graph.add_node(strVal);
+        
+    for node in allNodes:
+        if (not(node.getParent() is None)):
+            if (displayNumber):
+                graph.add_edge(node.getNumber(),
+                               node.getParent().getNumber())
+            else:
+                graph.add_edge(convertBoardToString(node.getNumber(),boardSize,gameBoard)
+                       ,convertBoardToString(node.getParent().getNumber(),boardSize,gameBoard))
+    
+    if (displayNumber):
+        nx.draw_kamada_kawai(graph, node_color=color_map, with_labels=True)    
+    else:
+        nx.draw_kamada_kawai(graph, node_color=color_map, with_labels=True, node_size=2000)    
+    plt.show()
+    
+        
+    
 def main(test = 0):
     
     if (test == 0):
@@ -255,30 +307,23 @@ def main(test = 0):
             step+=1
             
     elif (test == 7):
-        size = 3
+        size = 4
         lvl0 = BitBoard(size,False,True)
+        lvl0.assignCritterOnBoard(2,2);
+        lvl0.assignCritterOnBoard(1,3);
+        lvl0.assignCritterOnBoard(1,1);
         lvl0.findAllPossibleTransisitons()
         search = SearchAlgorithm.SearchAlgorithm(lvl0.getSparseAdjacencyMatrix().tolil())
-        impossible = 0
-        acceptable = 0
-        for i in range (1,2**(size**2)):
-            print ("Doing for connection " + str(i))
-            bitValue =  biv.BitVector(intVal = i, size = lvl0.getBoardSize()**2)
-            startNode = Node.Node (int(bitValue),None,0)
-            endNode = Node.Node (0, None, -1)
-            fin = search.BFS(startNode,endNode)
-            if (fin is None):
-                impossible += 1
-                print ("Configuration " + str(i) + " is impossible")
-                lvl0.representBoardAsMatrix(bitValue)
-            else:
-                acceptable += 1
-            
-        print ("The number acceptable solutions is :" + str(acceptable))
-        print ("The number of impossible solutions is: " + str(impossible))
-        
-                
-            
+        startNode = Node.Node(1)
+        endNode = Node.Node(0)
+        highlightNode = Node.Node(int(lvl0.getBitBoard()))
+        allNodes = search.reverseBFS(endNode)
+        path = search.BFS(startNode,endNode)
+        if (size < 4):
+            createGraph(lvl0,allNodes,highlightNode,True)   
+        print ("The number acceptable solutions is :" + str(len(allNodes)) + 
+               " out of the possible " + str(2**(lvl0.getBoardSize()**2)))
+    
         
 if __name__ == "__main__":
     print ("0 - Runs Main")

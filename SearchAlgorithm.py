@@ -16,6 +16,7 @@ import Node
 class SearchAlgorithm:
     
     def __init__(self, sparseAdjacency = None):
+        self.nodesThatReachEnd = []
         if ((sparseAdjacency is None) or 
             (type(sparseAdjacency) != sparse.lil_matrix)):
             print ("No adjacency matrix is currently used")
@@ -23,17 +24,26 @@ class SearchAlgorithm:
         else:
             self.sparseAdjacency = sparseAdjacency
             
-        self.queue = queue.Queue()
-        self.visited = None
+        self.adjacencyIsTransposed = False
+            
+        #self.queue = queue.Queue()
+        """
         if (not (sparseAdjacency is None) and 
             not (type(sparseAdjacency) != sparse.lil_matrix)):
             shape = (sparse.lil_matrix(self.sparseAdjacency)).get_shape()
             self.visited = np.zeros(shape[0], dtype = bool)
-        
+        """
     def setSparseAdjacencyMatrix(self, sparse):
         if (type(sparse) == sparse.lil_matrix):
             self.sparseAdjacency = copy.deepcopy(sparse)
-    
+
+    def transposeAdjacency (self):
+        if (isinstance(self.sparseAdjacency, sparse.lil_matrix)):
+            self.sparseAdjacency = self.sparseAdjacency.transpose()
+            self.adjacencyIsTransposed = self.adjacencyIsTransposed ^ True;
+        else:
+            print ("No matrix to invert")
+            
     """
     def BFS (self, startNode, endNode):
         #print("Distance from origin is : " + str(startNode.getOriginDistance()) )        
@@ -52,31 +62,62 @@ class SearchAlgorithm:
         else:
             return None        
     """
-        
+    
+    # If there exists a path between start and finish, returns true + path    
     def BFS (self, startNode, endNode):
-        self.queue.put(startNode)
-        while (not self.queue.empty()):
-            currentNode = self.queue.get()
-            if ( int(currentNode.getNumber()) == int(endNode.getNumber()) ):
-                return currentNode
+        shape = (sparse.lil_matrix(self.sparseAdjacency)).get_shape()
+        visited = np.zeros(shape[0], dtype = bool)
+        waiting = queue.Queue()
+        waiting.put(startNode)
+        path = []
+        while (not waiting.empty()):        
+            currentNode = waiting.get()
+
+            # Check if current node is the last node
+            if ( currentNode == endNode ):
+                trace = currentNode
+                while (not(trace is None)):
+                    path.append(trace)
+                    trace = trace.getParent()
+                return (True, path)
+            
+            # Check all other nodes connected to this node
             nonzero = sparse.find(self.sparseAdjacency[currentNode.getNumber()])
             connections = nonzero[1]
             for connection in connections:
-                if (self.visited[connection] == False):
-                    newNode = Node.Node(int(connection),currentNode,currentNode.getOriginDistance()+1)
-                    self.queue.put(newNode)
-            
-            self.visited[int(currentNode.getNumber())] = True
-        return None
-            
-            
-        
-        # if (self.visited[startNode] == False):
-        #     transitions = self.sparseAdjacency[startNode]
-        #     for element in transitions:
-        #         self.queue.put(element[1])
-        #     self.visited[startNode] = True;    
-            
+                if (visited[connection] == False):
+                    newNode = Node.Node(int(connection))
+                    newNode.setParent(currentNode)
+                    waiting.put(newNode)            
+            visited[int(currentNode.getNumber())] = True
+        return (False, [])
+    
+    def reverseBFS (self, endNode):
+        self.transposeAdjacency()
+        shape = (sparse.lil_matrix(self.sparseAdjacency)).get_shape()
+        visited = np.zeros(shape[0], dtype = bool)
+        waiting = queue.Queue()
+        waiting.put(endNode)
+        while (not waiting.empty()):        
+            currentNode = waiting.get()
+            if (visited[int(currentNode.getNumber())] == True):
+                continue
+            # Check all nodes connected to this node
+            nonzero = sparse.find(self.sparseAdjacency[currentNode.getNumber()])
+            connections = nonzero[1]
+            for connection in connections:
+                if (visited[connection] == False):
+                    newNode = Node.Node(int(connection))
+                    currentNode.addChild(newNode)
+                    newNode.setParent(currentNode)
+                    waiting.put(newNode)            
+            visited[int(currentNode.getNumber())] = True
+            self.nodesThatReachEnd.append(currentNode)
+        self.transposeAdjacency()
+        return self.nodesThatReachEnd
+    
+    def getAllNodesThatReachEnd(self):
+        return self.nodesThatReachEnd
         
 def main(test = 0):
   
@@ -121,12 +162,11 @@ def main(test = 0):
         
         sMatrix = sparse.lil_matrix(matrix)
         algo = SearchAlgorithm(sMatrix)
-        beginNode = Node.Node(0,None,0)
-        endNode = Node.Node(2,None,-1)
+        beginNode = Node.Node(0)
+        endNode = Node.Node(2)
         final = algo.BFS(beginNode,endNode)
-        while (final != None):
-            print(final.getNumber())
-            final = final.getParent()
+        for node in final[1]:
+            print("Node " + str(node.getNumber()))
             
         
 if (__name__ == "__main__"):
