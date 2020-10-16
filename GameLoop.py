@@ -1,4 +1,4 @@
-kan# Author: aqeelanwar
+
 # Created: 12 June,2020, 7:06 PM
 # Email: aqeel.anwar@gatech.edu
 
@@ -10,14 +10,14 @@ import numpy as np
 from PIL import ImageTk,Image
 
 # Define useful parameters
-size_of_board = 600
-rows = 10
-cols = 10
-DELAY = 100
-snake_initial_length = 3
-symbol_size = (size_of_board / 3 - size_of_board / 8) / 2
-symbol_thickness = 2
-RED_COLOR = "#EE4035"
+size_of_board = 1000 # board size in presumably pixels
+rows = 4 # number of rows / can deduce it from matrix size
+cols = 4 # number of cols / can deduce it from matrix size
+DELAY = 500 # delay between frame updates
+snake_initial_length = 3 # not needed
+symbol_size = (size_of_board / 3 - size_of_board / 8) / 2 # not used
+symbol_thickness = 2 # not used
+RED_COLOR = "#EE4035" # can define colors like this
 BLUE_COLOR = "#0492CF"
 Green_color = "#7BC043"
 
@@ -30,8 +30,10 @@ class SnakeAndApple:
     # Initialization Functions:
     # ------------------------------------------------------------------
     def __init__(self):
+        # creates the TK window and titles it
         self.window = Tk()
         self.window.title("Snake-and-Apple")
+        # Creates a canvas with the given size
         self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
         self.canvas.pack()
         # Input from user in form of clicks and keyboard

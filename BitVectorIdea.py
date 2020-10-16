@@ -165,6 +165,7 @@ class BitBoard:
                 self.sparseAdjacencyMatrix = sparse.load_npz(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz")
             except IOError as error:
                 print ("File not readable for some reason")
+                 
         
 def convertBoardToString(value,boardSize,bitBoard):
     bitValue =  biv.BitVector(intVal = value, size = boardSize**2)
@@ -194,22 +195,30 @@ def createGraph (gameBoard, allNodes,highlightNode = None, displayNumber = False
         else:    
             strVal = convertBoardToString(node.getNumber(),boardSize,gameBoard)
             graph.add_node(strVal);
-        
+    
     for node in allNodes:
         if (not(node.getParent() is None)):
+            edgelabel = sum (bit == 1 for bit in biv.BitVector(intVal =  node.getNumber() ^
+                                                                node.getParent().getNumber())) 
             if (displayNumber):
                 graph.add_edge(node.getNumber(),
-                               node.getParent().getNumber())
+                               node.getParent().getNumber(), l = edgelabel)
             else:
                 graph.add_edge(convertBoardToString(node.getNumber(),boardSize,gameBoard)
-                       ,convertBoardToString(node.getParent().getNumber(),boardSize,gameBoard))
+                       ,convertBoardToString(node.getParent().getNumber(),boardSize,gameBoard),l = edgelabel)
+    
+    labels = nx.get_edge_attributes(graph,'l')
+    position = nx.kamada_kawai_layout(graph)
+
     if (reverse):
         graph = nx.DiGraph.reverse(graph)
     
     if (displayNumber):
-        nx.draw_kamada_kawai(graph, node_color=color_map, with_labels=True, )    
+        nx.draw_kamada_kawai(graph, node_color=color_map, with_labels=True)
     else:
-        nx.draw_kamada_kawai(graph, node_color=color_map, with_labels=True, node_size=2000)    
+        nx.draw_kamada_kawai(graph, node_color=color_map, with_labels=True, node_size=2000)
+    
+    nx.draw_networkx_edge_labels(graph,position, edge_labels = labels)
     plt.show()
     
         
