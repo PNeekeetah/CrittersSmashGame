@@ -16,8 +16,7 @@ class LightsOn:
         self.canvas.pack()
         self.canvas.bind("<Button-1>",self.colorRect)
         self.canvas.bind("<Button-3>",self.eraseAll)
-        self.window.bind("<Key>",self.showTutorial)
-        self.window.bind("<Key>",self.goToPlayMode)
+        self.window.bind("<Key>",self.key_handler)
         self.x = 0
         self.y = 0
         self.size = size
@@ -35,20 +34,25 @@ class LightsOn:
             
         self.playMode = False
         
-        
-    def showTutorial(self, eventorigin):
-        print (eventorigin.char)
-        if ((eventorigin.char == "i") or (eventorigin.char == "I")) :
-            messagebox.showinfo( "Instructions", 
-            """
-            Left Click on any square on the grid to color it blue
-            Right Click anywhere on the grid to erase all blue squares
-            Press "I" to bring up this dialog box again
-            """)
+    def key_handler(self, eventorigin):
+        if ((eventorigin.char == "i") or (eventorigin.char == "I")):
+            self.showTutorial()
+        elif ((eventorigin.char == "p") or (eventorigin.char == "P")):
+            self.goToPlayMode()
+    
+    def showTutorial(self):
+        messagebox.showinfo( "Instructions", 
+        """
+        Left Click on any square on the grid to color it blue
+        Right Click anywhere on the grid to erase all blue squares
+        Press "I" to bring up this dialog box
+        Press "P" to start PlayMode
+        -> In play mode, when clicking on a lit square, it also toggles
+        the orthogonally adjacent ones
+        """)
      
-    def goToPlayMode(self, eventorigin):
-        if ((eventorigin.char == "p") or (eventorigin.char == "P")) :
-            self.playMode = True
+    def goToPlayMode(self):
+        self.playMode = True
         
     def getclick(self,eventorigin):
         self.x = eventorigin.x
@@ -61,10 +65,10 @@ class LightsOn:
         if (self.playMode == False):
             self.level.assignCritterOnBoard(r,c)
         else:
-            self.level.orthogonalWhack(r,c)
+            self.level.diagonalWhack(r,c)
         
         self.updateBoard()
-        #print (self.level.getBitBoard())
+        print (self.level.getBitBoard())
         
         
     def updateBoard (self):
@@ -123,6 +127,6 @@ class LightsOn:
         while True:
             self.window.update()
             
-window = LightsOn(20,600)
+window = LightsOn(5,1000)
 window.drawLines()
 window.mainloop()

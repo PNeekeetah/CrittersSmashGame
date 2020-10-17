@@ -136,6 +136,31 @@ class BitBoard:
                 if (( 0 <= down) and ( down < self.size**2)):
                     self.board[down] ^= 1
                 self.board[bitPos] ^= 1
+    
+    def diagonalWhack(self,x_pos,y_pos):
+        bitPos = x_pos*self.size + y_pos
+        upperLeftBound = (x_pos - 1)*self.size
+        upperRightBound = x_pos*self.size 
+        lowerLeftBound = (x_pos + 1)*self.size
+        lowerRightBound = (x_pos + 2)*self.size 
+        if (( 0 <= bitPos) and 
+            ( bitPos < self.size**2)):
+            if (self.board[bitPos] == 1 ):
+                ul = bitPos - self.size - 1
+                ur = bitPos - self.size + 1
+                dl = bitPos + self.size - 1
+                dr = bitPos + self.size + 1
+                if (( 0 <= ul) and ( ul < self.size**2) and (ul >= upperLeftBound)):
+                    self.board[ul] ^= 1
+                if (( 0 <= ur) and ( ur < self.size**2) and (ur < upperRightBound)):
+                    self.board[ur] ^= 1
+                if (( 0 <= dl) and ( dl < self.size**2) and (dl >= lowerLeftBound)):
+                    self.board[dl] ^= 1
+                if (( 0 <= dr) and ( dr < self.size**2) and (dr < lowerRightBound)):
+                    self.board[dr] ^= 1
+                self.board[bitPos] ^= 1
+
+                
                 
     def findAllPossibleTransisitons(self):
         dirname = os.path.dirname(__file__)
