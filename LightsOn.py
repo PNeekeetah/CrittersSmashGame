@@ -7,6 +7,7 @@ import BitVector as biv
 BLUE_COLOR = "#ADD8E6"
 GREY_COLOR = "#F0F0F0"
 BLACK_COLOR = "#000000"
+RED_COLOR = "#FA8072"
 
 class LightsOn:
     def __init__(self,size,boardSize = 600 ):
@@ -25,6 +26,7 @@ class LightsOn:
         self.rowh = boardSize/size
         self.colh = boardSize/size
         self.boardSize = boardSize
+        self.orthogonal = True
         #self.visited = np.zeros((rows*cols),dtype = bool)
         if (size <= 4):
             self.level = BitBoard(size,False,True)
@@ -33,22 +35,32 @@ class LightsOn:
             self.level = BitBoard(size,False,False)
             
         self.playMode = False
+        print("Press 'I' for more information.")
         
     def key_handler(self, eventorigin):
         if ((eventorigin.char == "i") or (eventorigin.char == "I")):
             self.showTutorial()
         elif ((eventorigin.char == "p") or (eventorigin.char == "P")):
             self.goToPlayMode()
+        elif (((eventorigin.char == "x") or (eventorigin.char == "X")) and
+              self.playMode == False):
+            self.toggleCross()
+            
+    def toggleCross(self):
+        self.orthogonal ^= True
     
     def showTutorial(self):
         messagebox.showinfo( "Instructions", 
         """
-        Left Click on any square on the grid to color it blue
-        Right Click anywhere on the grid to erase all blue squares
+        Left Click on any square on the grid to color 
+        Right Click anywhere on the grid to erase it
         Press "I" to bring up this dialog box
-        Press "P" to start PlayMode
-        -> In play mode, when clicking on a lit square, it also toggles
-        the orthogonally adjacent ones
+        Press "P" to start Play Mode
+        Press "X" to toggle between Orthogonal switch or Cross switch
+        Once "Play Mode" is active, you cannot use "X" anymore
+        In "Play Mode", blue is used to indicate that the orthogonally 
+        adjacent squares get toggled, whereas red is used to indicate that
+        the diagonal squares get toggled.
         """)
      
     def goToPlayMode(self):
@@ -65,7 +77,10 @@ class LightsOn:
         if (self.playMode == False):
             self.level.assignCritterOnBoard(r,c)
         else:
-            self.level.diagonalWhack(r,c)
+            if (self.orthogonal):
+                self.level.orthogonalWhack(r,c)
+            else:
+                self.level.diagonalWhack(r,c)
         
         self.updateBoard()
         print (self.level.getBitBoard())
@@ -81,10 +96,17 @@ class LightsOn:
             x2 = x1 + self.rowh
             y2 = y1 + self.colh
             if (bitBoard[r*self.rows+c] == 1):
-                self.canvas.create_rectangle(x1, y1, 
-                                         x2, y2, 
-                                         fill=BLUE_COLOR, 
-                                         outline=BLACK_COLOR)
+                if (self.orthogonal):
+                    self.canvas.create_rectangle(x1, y1, 
+                                             x2, y2, 
+                                             fill=BLUE_COLOR, 
+                                             outline=BLACK_COLOR)
+                else :
+                    self.canvas.create_rectangle(x1, y1, 
+                                             x2, y2, 
+                                             fill=RED_COLOR, 
+                                             outline=BLACK_COLOR)
+                    
             else:
                 self.canvas.create_rectangle(x1, y1, 
                                      x2, y2, 
@@ -127,6 +149,6 @@ class LightsOn:
         while True:
             self.window.update()
             
-window = LightsOn(5,1000)
+window = LightsOn(20,1000)
 window.drawLines()
 window.mainloop()
