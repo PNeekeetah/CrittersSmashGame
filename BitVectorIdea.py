@@ -61,7 +61,7 @@ class BitBoard:
             
     # Assign logic 1 at position x_pos, y_pos
     def assignCritterOnBoard(self, x_pos, y_pos):
-        self.board[x_pos*self.size + y_pos] = 1
+        self.board[x_pos*self.size + y_pos] ^= 1
     
     # Test method that fills half or the entire bit vector
     def fillBoard (self, full = False):
