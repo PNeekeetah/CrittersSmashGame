@@ -162,35 +162,58 @@ class BitBoard:
 
                 
                 
-    def findAllPossibleTransisitons(self):
+    def findAllPossibleTransisitons(self,diagonalWhack = True):
         dirname = os.path.dirname(__file__)
         pathname = os.path.join(dirname,"FoundTransitions\ ")
         
         if (not os.path.exists(pathname)):
             os.mkdir(pathname)  
         
-        if ( not os.path.isfile(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz")):
-        
-            for i in range(2**(self.size**2)-1, -1,-1):
-                refBoard = biv.BitVector(intVal = i, size = self.size**2)
-                for j in range (0,self.size**2):
-                    self.board = copy.deepcopy(refBoard)
-                    coords = (j//self.size, j % self.size)                
-                    self.orthogonalWhack(coords[0],coords[1])
-                    if (int(refBoard) != int(self.board)):
-                        self.sparseAdjacencyMatrix[int(refBoard),int(self.board)] = True
-                        
-                        
-            sparse.save_npz(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz",self.sparseAdjacencyMatrix.tocoo())
-            file = open( pathname+str(self.size)+"x"+str(self.size)+"transitions.txt" , "w")
-            file.write( str(self.sparseAdjacencyMatrix) )
-            file.close()
-        else :
-            try:
-                self.sparseAdjacencyMatrix = sparse.load_npz(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz")
-            except IOError as error:
-                print ("File not readable for some reason")
-                 
+        if (not diagonalWhack):
+            if ( not os.path.isfile(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz")):
+            
+                for i in range(2**(self.size**2)-1, -1,-1):
+                    refBoard = biv.BitVector(intVal = i, size = self.size**2)
+                    for j in range (0,self.size**2):
+                        self.board = copy.deepcopy(refBoard)
+                        coords = (j//self.size, j % self.size)                
+                        self.orthogonalWhack(coords[0],coords[1])
+                        if (int(refBoard) != int(self.board)):
+                            self.sparseAdjacencyMatrix[int(refBoard),int(self.board)] = True
+                            
+                            
+                sparse.save_npz(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz",self.sparseAdjacencyMatrix.tocoo())
+                file = open( pathname+str(self.size)+"x"+str(self.size)+"transitions.txt" , "w")
+                file.write( str(self.sparseAdjacencyMatrix) )
+                file.close()
+            else :
+                try:
+                    self.sparseAdjacencyMatrix = sparse.load_npz(pathname+str(self.size)+"x"+str(self.size)+"transitions.npz")
+                except IOError as error:
+                    print ("File not readable for some reason")
+        else:
+            if ( not os.path.isfile(pathname+"diagonal"+str(self.size)+"x"+str(self.size)+"transitions.npz")):
+            
+                for i in range(2**(self.size**2)-1, -1,-1):
+                    refBoard = biv.BitVector(intVal = i, size = self.size**2)
+                    for j in range (0,self.size**2):
+                        self.board = copy.deepcopy(refBoard)
+                        coords = (j//self.size, j % self.size)                
+                        self.diagonalWhack(coords[0],coords[1])
+                        if (int(refBoard) != int(self.board)):
+                            self.sparseAdjacencyMatrix[int(refBoard),int(self.board)] = True
+                            
+                            
+                sparse.save_npz(pathname+"diagonal"+str(self.size)+"x"+str(self.size)+"transitions.npz",self.sparseAdjacencyMatrix.tocoo())
+                file = open( pathname+"diagonal"+str(self.size)+"x"+str(self.size)+"transitions.txt" , "w")
+                file.write( str(self.sparseAdjacencyMatrix) )
+                file.close()
+            else :
+                try:
+                    self.sparseAdjacencyMatrix = sparse.load_npz(pathname+"diagonal"+str(self.size)+"x"+str(self.size)+"transitions.npz")
+                except IOError as error:
+                    print ("File not readable for some reason")
+             
         
 def convertBoardToString(value,boardSize,bitBoard):
     bitValue =  biv.BitVector(intVal = value, size = boardSize**2)
@@ -364,6 +387,21 @@ def main(test = 0):
         print ("The number acceptable solutions is :" + str(len(allNodes)) + 
                " out of the possible " + str(2**(lvl0.getBoardSize()**2)))
     
+    elif (test == 8):
+        size = 5
+        lvl0 = BitBoard(size,False,True)
+        #lvl0.assignCritterOnBoard(2,2);
+        #lvl0.assignCritterOnBoard(1,3);
+        #lvl0.assignCritterOnBoard(1,1);
+        lvl0.findAllPossibleTransisitons(diagonalWhack=True)
+        search = SearchAlgorithm.SearchAlgorithm(lvl0.getSparseAdjacencyMatrix().tolil())
+        endNode = Node.Node(0)
+        #highlightNode = Node.Node(int(lvl0.getBitBoard()))
+        allNodes = search.reverseBFS(endNode)
+        #if (size < 4):
+        #    createGraph(lvl0,allNodes,None,False)   
+        print ("The number acceptable solutions is :" + str(len(allNodes)) + 
+               " out of the possible " + str(2**(lvl0.getBoardSize()**2)))
         
 if __name__ == "__main__":
     print ("0 - Runs Main")
@@ -375,6 +413,8 @@ if __name__ == "__main__":
     print ("6 - Search Test")
     print ("7 - Find all possible sollutions for a 4 x 4 board and attempt"
            + " to find path from node 45019")
+    print ("8 - Find all possible solutions for a 3 x 3 board using the" 
+           + " diagonal whack and find path from ...")
     test = int(input())
     main(test)
 

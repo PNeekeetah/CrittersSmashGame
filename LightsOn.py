@@ -112,6 +112,14 @@ class LightsOn:
                                      x2, y2, 
                                      fill=GREY_COLOR, 
                                      outline=BLACK_COLOR)
+        if (int(bitBoard) == 0):
+            self.endgame()
+            
+    def endgame (self):
+        if (self.playMode == True):
+            messagebox.showinfo( "Endgame", 
+            """You won""")
+            self.playMode = False
 
     def eraseAll(self,eventorigin):
         if (self.playMode == False):
@@ -149,6 +157,6 @@ class LightsOn:
         while True:
             self.window.update()
             
-window = LightsOn(20,1000)
+window = LightsOn(3,1000)
 window.drawLines()
 window.mainloop()
