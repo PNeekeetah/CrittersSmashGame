@@ -18,12 +18,21 @@ import matplotlib.pyplot as plt
 class BitBoard:
     totalBitBoards = 0
     
-    # Used for ID-ing 
+    """
+    getCounter() is used to return the total number of
+    boards that were created throughout program's lifetime
+    """ 
     @staticmethod
     def getCounter():
         BitBoard.totalBitBoards += 1
         return BitBoard.totalBitBoards
     
+    """
+    The constructor takes in a size : int, createAdjacency : bool and a 
+    createSparseAdjacency : bool. Based on these, it will either create
+    an adjacency matrix of type lil_matrix, np.array, both or it won't
+    create either.
+    """
     def __init__(self, size, createAdjacency = False, createSparseAdjacency = True):
         self.size = size;
         self.board = biv.BitVector(size = size**2)
@@ -39,10 +48,22 @@ class BitBoard:
             
         self.ID = BitBoard.getCounter()
         
-    def setBitBoard (self, board):
-        self.board = board
+    """
+    representBoardAsMatrix(self : BitBoard , 
+                           bitBoard = None : BitVector, 
+                           printBoard = False : bool )
+    either takes the BitBoard's own BitVector or the BitVector passed as
+    an argument and displays it as a matrix. The conversion from BitVector
+    to matrix representation is done by filling the matrix from left to
+    right, top to bottom with the elements from the BitVector. 
     
-    # Takes a bit vector and shows it as a matrix
+    For example, BitVector "0 0 0 0 0 0 0 0 1" converted to a matrix looks
+    as follows :
+        0 0 0
+        0 0 0
+        0 0 1
+    The matrix representation is returned as an np.array
+    """
     def representBoardAsMatrix(self, bitBoard = None, printBoard = False ):
         if (bitBoard is None):
             matrixRepr = np.zeros((self.size,self.size), dtype = np.int8)
@@ -62,11 +83,21 @@ class BitBoard:
                 print (matrixRepr)
             return matrixRepr
             
-    # Assign logic 1 at position x_pos, y_pos
+    """
+    assignCritterOnBoard(self : BitBoard, x_pos : int, y_pos : int) assigns a
+    1 at the specified x,y coordinates if a 0 is present there currently, 
+    otherwise it assigns a 0. 
+    
+    Used especially for setting up the initial state of the board
+    """
     def assignCritterOnBoard(self, x_pos, y_pos):
         self.board[x_pos*self.size + y_pos] ^= 1
     
-    # Test method that fills half or the entire bit vector
+    """
+    fillBoard(self : BitBoard , full : bool) either fills the board 
+    completely with 1's or, if full = False, it fills the board over 
+    the main diagonal with 1's.
+    """
     def fillBoard (self, full = False):
         for i in range (0, self.size):
             if (full == False):
@@ -76,23 +107,46 @@ class BitBoard:
                 for j in range (0, self.size):
                     self.assignCritterOnBoard(i,j)
     
-    # Getter for bit vector
+    """
+    getBitBoard (self : BitVector) returns the current BitVector board.
+    """
     def getBitBoard(self):
         return self.board
     
-    # Getter for Adjacency Matrix    
+    """
+    setBitBoard(self : BitBoard, board : BitVector) sets the BitVector
+    board of the BitBoard.
+    """
+    def setBitBoard (self, board):
+        self.board = board
+
+    
+    """
+    getAdjacencyMatrix(self : BitBoard) returns the np.array() adjacency 
+    matrix .   
+    """
     def getAdjacencyMatrix(self):
         return self.adjacencyMatrix
 
-    # Getter for Sparse Adjacency Matrix
+    """
+    getSparseAdjacencyMatrix(self : BitBoard) returns the sparse adjacency
+    matrix.
+    """
     def getSparseAdjacencyMatrix(self):
         return self.sparseAdjacencyMatrix
     
-    # Getter for size
+    """
+    getBoardSize(self : BitBoard) returns the side "length" of the board
+    """
     def getBoardSize(self):
         return self.size
     
-    # Method for testing size
+    """
+    printObjectSizeStatistics(self : BitBoard, other = None : BitBoard) prints
+    statistics with regards to the size in MB of the object. If only 1 object
+    is passed, it returns its size; if 2 objects are passed, it returns the ratio
+    of self / other
+    """
     def printObjectSizeStatistics(self, other = None):
         if ((other is None) or (not isinstance(other,BitBoard))):
             print("Object " +str(self.ID) + " has : " 
@@ -109,7 +163,11 @@ class BitBoard:
             print ("SparseAdjMatrx" +str(self.ID) +"/SparseAdjMatrix" + str(other.ID) +" is " + 
                    str(sys.getsizeof(self.sparseAdjacencyMatrix)/sys.getsizeof(other.sparseAdjacencyMatrix)))
     
-    # Method for filling a sparse matrix
+    """
+    fillSparseAdjacencyMatrix(self : BitBoard ,debug = False : bool) is used
+    as a test method to grasp the size difference between a filled sparse matrix
+    and an empty one.
+    """
     def fillSparseAdjacencyMatrix(self,debug = False):
         for i in range (0, 2**(self.size**2)):
             if (debug):
@@ -118,7 +176,28 @@ class BitBoard:
                 #if (debug):
                     #print("Filling Column " + str(j))
                 self.sparseAdjacencyMatrix[i,j] = True
+    
+    """
+    isWhackable(self : BitBoard ,x_pos : int,y_pos : int) returns whether
+    it is possible to act upon the board spot located at x,y.
+    """
+    def isWhackable(self,x_pos,y_pos):
+        bitPos = x_pos*self.size + y_pos
+        return self.board[bitPos] == 1
                 
+    """
+    orthogonalWhack(self : BitBoard ,x_pos : int,y_pos : int) will toggle
+    the cells surrounding and including x,y in an orthogonal manner if possible.
+    
+    For example, if the state is 
+    0 1 0
+    1 1 1
+    0 1 0
+    then acting upon the cell at (1,1) yields
+    0 0 0 
+    0 0 0
+    0 0 0
+    """
     def orthogonalWhack(self,x_pos,y_pos):
         bitPos = x_pos*self.size + y_pos
         leftBound = (x_pos)*self.size
@@ -140,6 +219,19 @@ class BitBoard:
                     self.board[down] ^= 1
                 self.board[bitPos] ^= 1
     
+    """
+    diagonalWhack(self : BitBoard ,x_pos : int,y_pos : int) will toggle
+    the cells surrounding and including x,y in a diagonal manner if possible.
+    
+    For example, if the state is 
+    1 0 1
+    0 1 0
+    1 0 1
+    then acting upon the cell at (1,1) yields
+    0 0 0 
+    0 0 0
+    0 0 0
+    """
     def diagonalWhack(self,x_pos,y_pos):
         bitPos = x_pos*self.size + y_pos
         upperLeftBound = (x_pos - 1)*self.size
@@ -162,9 +254,27 @@ class BitBoard:
                 if (( 0 <= dr) and ( dr < self.size**2) and (dr < lowerRightBound)):
                     self.board[dr] ^= 1
                 self.board[bitPos] ^= 1
-
-                
-                
+    
+    """
+    countOnes(self : BitBoard) returns the total number of cells equal to 1
+    """
+    def countOnes(self):
+        return sum(bit == 1 for bit in self.board)
+    
+    """
+    findAllPossibleTransisitons(self : BitBoard ,diagonalWhack = True : bool)
+    will first create a new folder " FoundTransitions " if possible.
+    
+    For each possible board configuration, every possible bit equal to 1 is 
+    acted upon via either the "orthogonalWhack" or "diagonalWhack" method. The
+    sparse adjacency matrix is filled accordingly with 1's when a transition
+    between 2 states is possible
+    
+    All transitions that were found in this manner are saved, in the 
+    " FoundTransitions " folder. These can be reloaded for added speed;
+    It takes under a second to find all possible transitions for a 2x2 and a 3x3.
+    but it takes 1 minute 50 for a 4x4.
+    """            
     def findAllPossibleTransisitons(self,diagonalWhack = True):
         dirname = os.path.dirname(__file__)
         pathname = os.path.join(dirname,"FoundTransitions\ ")
@@ -217,7 +327,13 @@ class BitBoard:
                 except IOError as error:
                     print ("File not readable for some reason")
              
-        
+"""
+convertBoardToString(value : int,boardSize : int ,bitBoard : BitVector) returns
+a string representation of the matrix. 
+
+This can be used for small sized graphs to show the transitions from one state
+to another.
+"""        
 def convertBoardToString(value,boardSize,bitBoard):
     bitValue =  biv.BitVector(intVal = value, size = boardSize**2)
     arrVal = BitBoard.representBoardAsMatrix(bitBoard,bitValue)
@@ -229,6 +345,20 @@ def convertBoardToString(value,boardSize,bitBoard):
             strVal += (str(arrVal[i,j]) + " ")
     return strVal
 
+"""
+createGraph(gameBoard : BitBoard, 
+            allNodes : List of <Node>,
+            highlightNode = None : Node, 
+            displayNumber = False : bool , 
+            reverse = False : bool) 
+creates a graph based on the child-parent relationships found in the list "allNodes".
+If a highlightNode is passed, said node is colored in pink on the graph.
+If displayNumber is False, the nodes will be displayed as an NxN matrix of 1's and 0's
+Otherwise, it is displayed as a number.
+If reverse is true, the edges of the graph are reversed 
+
+This method can be used with both full solution graphs or with individual solution graphs.
+"""
 def createGraph (gameBoard, allNodes,highlightNode = None, displayNumber = False , reverse = False) :
     graph = nx.DiGraph()
     boardSize = gameBoard.getBoardSize()
@@ -273,7 +403,11 @@ def createGraph (gameBoard, allNodes,highlightNode = None, displayNumber = False
     plt.show()
     
         
-    
+"""
+The main function contains several tests that showcase the several functions
+that are available in the BitVector class as well as the non-class specific 
+functions that deal with graphs and representations.
+"""    
 def main(test = 0):
     
     if (test == 0):
@@ -281,7 +415,6 @@ def main(test = 0):
         lvl0 = BitBoard(2)
 
     if (test == 1):
-        # This is the size comparison test
         print("====================== This is the size comparison test ======================")
         lvl0 = BitBoard(2, True, True)  
         lvl1 = BitBoard(4, True, True)    
@@ -289,7 +422,6 @@ def main(test = 0):
         lvl1.printObjectSizeStatistics()
         
     elif(test == 2):
-        # This is the sparse matrix fill comparison test
         print("====================== This is the sparse matrix fill comparison test ======================")
         lvl0 = BitBoard(3, True, True)  
         lvl1 = BitBoard(3, True, True)
@@ -301,7 +433,6 @@ def main(test = 0):
         print(lvl1.getSparseAdjacencyMatrix().toarray())
     
     elif (test == 3):
-        #This is a matrix repr test
         print("====================== This is the board representation test ======================")
         lvl0 = BitBoard(5,False,False)
         lvl0.fillBoard()
@@ -309,33 +440,39 @@ def main(test = 0):
         lvl0.representBoardAsMatrix()
         print ("Board as a 1D bit vector : ")
         print (lvl0.getBitBoard())
+    
     elif (test == 4):
-        #This is a test for the whack function
         print("====================== This is a test for the board whacking function ======================")
-        size = 4
+        size = 3
         lvl0 = BitBoard (size, False, False)
         lvl0.fillBoard(full = True)
         for i in range (0,size):
             for j in range (0,size):
+                print ("\n Whack at " + str( (i,j) ) +"\n")
                 placeholder = copy.deepcopy(lvl0)
                 placeholder.orthogonalWhack(i,j)
+                print (placeholder.representBoardAsMatrix())
                 placeholder.representBoardAsMatrix()
-                print ("\n")
         placeholder = copy.deepcopy(lvl0)
         # None should change
         placeholder.orthogonalWhack(4,1) 
-        placeholder.representBoardAsMatrix()
-        print("\n")
+        print("Used to show that it doesn't work out of bounds \n")
+        print(placeholder.representBoardAsMatrix())
         lvl0.orthogonalWhack(1,1)
-        lvl0.representBoardAsMatrix()
-        print("\n")
+        print("Used to show that it doesn't act on a bit that is 0 \n")
+        print(lvl0.representBoardAsMatrix())
         lvl0.orthogonalWhack(1,1)
-        lvl0.representBoardAsMatrix()
+        print("\n")
+        print(lvl0.representBoardAsMatrix())
+        
     elif (test == 5):
+        print("====================== This is a test for finding all possible transitions ======================")
         size = 4
         lvl0 = BitBoard(size,False,True)
         lvl0.findAllPossibleTransisitons()
+    
     elif (test == 6):
+        print("====================== This is a test for the BFS function ======================")
         size = 3
         lvl0 = BitBoard(size,False,True)
         lvl0.assignCritterOnBoard(0,0)
@@ -345,36 +482,31 @@ def main(test = 0):
         print("Starting State : ")
         lvl0.representBoardAsMatrix()
         print("\n")
-        lvl0.findAllPossibleTransisitons()
+        lvl0.findAllPossibleTransisitons(diagonalWhack=False)
         search = SearchAlgorithm.SearchAlgorithm(lvl0.getSparseAdjacencyMatrix().tolil())
-        
-        startNode = Node.Node (int(lvl0.getBitBoard()),None,0)
-        endNode = Node.Node (0,None, -1)
+        startNode = Node.Node (int(lvl0.getBitBoard()))
+        endNode = Node.Node (0)
         fin = search.BFS(startNode,endNode)
-        solution = deque()
-        step = 0
-        lastSol = 0
-        currSol = 0
-        while (fin != None):
-            solution.append(biv.BitVector(intVal = fin.getNumber(), size = (lvl0.getBoardSize())**2))
-            fin = fin.getParent()
-            
+        solution = fin[1]
+        step = len(solution)-1
         if (len(solution) == 0):
             print("This has no solution")
             
-        while (len(solution) != 0):
+        while (0 < step):
             print("Step: " + str(step))
-            lvl0.representBoardAsMatrix(solution.pop())
+            lvl0.representBoardAsMatrix(biv.BitVector( intVal = solution[step].getNumber(), size = lvl0.getBoardSize()**2),
+                                              printBoard=True)
             print("\n")
-            step+=1
+            step-=1
             
     elif (test == 7):
+        print("====================== This is a test for the reverse BFS function paired with orthogonal whacking ======================")
         size = 4
         lvl0 = BitBoard(size,False,True)
         lvl0.assignCritterOnBoard(2,2);
         lvl0.assignCritterOnBoard(1,3);
         lvl0.assignCritterOnBoard(1,1);
-        lvl0.findAllPossibleTransisitons()
+        lvl0.findAllPossibleTransisitons(diagonalWhack=False)
         search = SearchAlgorithm.SearchAlgorithm(lvl0.getSparseAdjacencyMatrix().tolil())
         startNode = Node.Node(45019) # starting from node Node.Node(1) fails
         endNode = Node.Node(0)
@@ -391,6 +523,7 @@ def main(test = 0):
                " out of the possible " + str(2**(lvl0.getBoardSize()**2)))
     
     elif (test == 8):
+        print("====================== This is a test for the reverse BFS function paired with diagonal whacking ======================")
         size = 3
         lvl0 = BitBoard(size,False,True)
         lvl0.assignCritterOnBoard(2,2);
@@ -405,9 +538,20 @@ def main(test = 0):
             createGraph(lvl0,allNodes,highlightNode,False)   
         print ("The number acceptable solutions is :" + str(len(allNodes)) + 
                " out of the possible " + str(2**(lvl0.getBoardSize()**2)))
+    
+    elif (test == 9):
+        size = 3
+        lvl0 = BitBoard(size,False,False)
+        lvl0.assignCritterOnBoard(2,2);
+        lvl0.assignCritterOnBoard(1,3);
+        lvl0.assignCritterOnBoard(1,1);
+        search = SearchAlgorithm.SearchAlgorithm()
+        currentNode = Node.Node(0)
+        path = search.greedySearch( currentNode, lvl0, iterations = 500 )
+        print (path)
         
 if __name__ == "__main__":
-    print ("0 - Runs Main")
+    print ("0 - Runs Main - *EMPTY*")
     print ("1 - Size Comparison test")
     print ("2 - Fill Size Comparison Test")
     print ("3 - Board Representation Test")
@@ -418,6 +562,7 @@ if __name__ == "__main__":
            + " to find path from node 45019")
     print ("8 - Find all possible solutions for a 3 x 3 board using the" 
            + " diagonal whack and highligh starting point")
+    print ("9 - Greedy search algorithm for path - *NOT FUNCTIONAL* ")
     test = int(input())
     main(test)
 

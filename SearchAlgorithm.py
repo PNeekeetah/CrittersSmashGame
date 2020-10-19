@@ -12,10 +12,15 @@ import BitVector as biv
 import numpy as np
 import copy
 import Node
-from collections import deque  
+import random
+
 
 class SearchAlgorithm:
     
+    """
+    Constructor(self: SearchAlgorithm, sparseAdjacency : sparse.lil_matrix) takes
+    in a sparse matrix or nothing if one will be set later.
+    """
     def __init__(self, sparseAdjacency = None):
         self.nodesThatReachEnd = []
         if ((sparseAdjacency is None) or 
@@ -23,21 +28,22 @@ class SearchAlgorithm:
             print ("No adjacency matrix is currently used")
             sparseAdjacency = None
         else:
-            self.sparseAdjacency = sparseAdjacency
-            
+            self.sparseAdjacency = sparseAdjacency    
         self.adjacencyIsTransposed = False
-            
-        #self.queue = queue.Queue()
-        """
-        if (not (sparseAdjacency is None) and 
-            not (type(sparseAdjacency) != sparse.lil_matrix)):
-            shape = (sparse.lil_matrix(self.sparseAdjacency)).get_shape()
-            self.visited = np.zeros(shape[0], dtype = bool)
-        """
+    
+    """
+    setSparseAdjacencyMatrix(self : SearchAlgorithm, sparse : sparse.lil_matrix)
+    takes a sparse matrix for use when performing a BFS or a reverse BFS
+    """    
     def setSparseAdjacencyMatrix(self, sparse):
         if (type(sparse) == sparse.lil_matrix):
             self.sparseAdjacency = copy.deepcopy(sparse)
 
+    """
+    transposeAdjacency(self : SearchAlgorithm) is used to reverse the connections
+    of the resulting graph. To reverse the connections, the adjacency matrix is 
+    transposed.
+    """
     def transposeAdjacency (self):
         if (isinstance(self.sparseAdjacency, sparse.lil_matrix)):
             self.sparseAdjacency = self.sparseAdjacency.transpose()
@@ -45,26 +51,11 @@ class SearchAlgorithm:
         else:
             print ("No matrix to invert")
             
-    """
-    def BFS (self, startNode, endNode):
-        #print("Distance from origin is : " + str(startNode.getOriginDistance()) )        
-        self.visited[int(startNode.getNumber())] = True
-        if ( int(startNode.getNumber()) == int(endNode.getNumber()) ):
-            return startNode
-        nonzero = sparse.find(self.sparseAdjacency[startNode.getNumber()])
-        connections = nonzero[1]
-        for connection in connections:
-            if (self.visited[connection] == False):
-                newNode = Node.Node(int(connection),startNode,startNode.getOriginDistance()+1)
-
-                self.queue.put(newNode)
-        if (not self.queue.empty()):
-            return self.BFS(self.queue.get(),endNode)
-        else:
-            return None        
-    """
     
-    # If there exists a path between start and finish, returns true + path    
+    """
+    BFS (self : SearchAlgorithm, startNode : Node, endNode : Node) takes in
+    the starting node and the end node and returns a path that ties the 2.
+    """
     def BFS (self, startNode, endNode):
         shape = (sparse.lil_matrix(self.sparseAdjacency)).get_shape()
         visited = np.zeros(shape[0], dtype = bool)
@@ -97,7 +88,57 @@ class SearchAlgorithm:
         print ("Total visited nodes until failure " + 
                str(sum(element == True for element in visited)) )
         return (False, path)
+    """
+    def greedySearch(self, currentNode, level, iterations = 500):
+        path = []
+        iteration = 0
+        saveBoard = BitBoard.getBitBoard(level)
+        size = BitBoard.getBoardSize(level)
+        while (iteration < iterations):
+            minBoard = BitBoard.getBitBoard(level)
+            currBoard = BitBoard.getBitBoard(level)
+            minLevel = size**2
+            minCandidates = []
+            for i in range (size**2):
+                row = i // size
+                col = i % size
+                whackable = BitBoard.isWhackable(level, row, col)
+                if (whackable):
+                    BitBoard.orthogonalWhack(level,row,col)
+                    totalOn = BitBoard.countOnes(level)
+                    if (totalOn < minLevel ):
+                        minCandidates.clear()
+                        minBoard = BitBoard.getBitBoard(level)
+                        minLevel = totalOn
+                        saveRow = row
+                        saveCol = col
+                    if (totalOn == minLevel):
+                        minCandidates.append(BitBoard.getBitBoard(level))
+                    
+                    BitBoard.setBitBoard(level,currBoard)
+            
+            totalMinCand = len(minCandidates)
+            isInList = False
+            if ( totalMinCand >= 1):
+                potential = (minCandidates[random.randint(0, totalMinCand -1)])
+                for conf in path:
+                    if (potential == conf):
+                        isInList = True
+                if (not isInList):
+                    path.append(potential)
+                    
+            BitBoard.setBitBoard(level,path[-1])
+            iteration += 1
+        return path
+      """
+        
+    """
+    reverseBFS (self : SearchAlgorithm, endNode : Node) finds all the nodes connected
+    to endNode. A typical use case is to assign endNode as Node.Node(0) and then
+    show all reachable states from there. 
     
+    The list that is returned contains all solvable states  of the state space.
+    """
     def reverseBFS (self, endNode):
         self.transposeAdjacency()
         shape = (sparse.lil_matrix(self.sparseAdjacency)).get_shape()
@@ -122,6 +163,10 @@ class SearchAlgorithm:
         self.transposeAdjacency()
         return self.nodesThatReachEnd
     
+    """
+    getAllNodesThatReachEnd(self : SearchAlgorithm) returns all the nodes that
+    reached the end if they were previously found.
+    """
     def getAllNodesThatReachEnd(self):
         return self.nodesThatReachEnd
         
@@ -131,6 +176,7 @@ def main(test = 0):
         print ("Run main as usual")
         
     elif(test == 1):
+        print("Quick test for stack and queue functionality")
         Q = queue.Queue()
         S = deque()    
         size = 10
@@ -147,6 +193,7 @@ def main(test = 0):
             print(S.pop())        
     
     elif (test == 2):
+        print ("Test for setting an adjacency matrix")
         matrix = np.array([[0,1,0],
                            [1,0,1],
                            [0,1,0]])
@@ -155,6 +202,7 @@ def main(test = 0):
         print(sMatrix)
         startNode = 2
         print ("\n")
+        print ("Shows starting node connections")
         print (sMatrix[startNode])
         #for element in sMatrix[startNode]:
         #   print (element)
@@ -162,6 +210,8 @@ def main(test = 0):
         algo = SearchAlgorithm(sMatrix)
         
     elif (test == 3):
+        print ("Quick test that shows the path between a Node with number 0 " + 
+               " and a Node with number 2.")
         matrix = np.array([[0,1,0],
                            [1,0,1],
                            [0,1,0]])
