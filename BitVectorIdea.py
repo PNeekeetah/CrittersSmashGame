@@ -38,6 +38,9 @@ class BitBoard:
             self.sparseAdjacencyMatrix = None
             
         self.ID = BitBoard.getCounter()
+        
+    def setBitBoard (self, board):
+        self.board = board
     
     # Takes a bit vector and shows it as a matrix
     def representBoardAsMatrix(self, bitBoard = None, printBoard = False ):
@@ -388,18 +391,18 @@ def main(test = 0):
                " out of the possible " + str(2**(lvl0.getBoardSize()**2)))
     
     elif (test == 8):
-        size = 5
+        size = 3
         lvl0 = BitBoard(size,False,True)
-        #lvl0.assignCritterOnBoard(2,2);
-        #lvl0.assignCritterOnBoard(1,3);
-        #lvl0.assignCritterOnBoard(1,1);
+        lvl0.assignCritterOnBoard(2,2);
+        lvl0.assignCritterOnBoard(1,3);
+        lvl0.assignCritterOnBoard(1,1);
         lvl0.findAllPossibleTransisitons(diagonalWhack=True)
         search = SearchAlgorithm.SearchAlgorithm(lvl0.getSparseAdjacencyMatrix().tolil())
         endNode = Node.Node(0)
-        #highlightNode = Node.Node(int(lvl0.getBitBoard()))
+        highlightNode = Node.Node(int(lvl0.getBitBoard()))
         allNodes = search.reverseBFS(endNode)
-        #if (size < 4):
-        #    createGraph(lvl0,allNodes,None,False)   
+        if (size < 4):
+            createGraph(lvl0,allNodes,highlightNode,False)   
         print ("The number acceptable solutions is :" + str(len(allNodes)) + 
                " out of the possible " + str(2**(lvl0.getBoardSize()**2)))
         
@@ -414,15 +417,9 @@ if __name__ == "__main__":
     print ("7 - Find all possible sollutions for a 4 x 4 board and attempt"
            + " to find path from node 45019")
     print ("8 - Find all possible solutions for a 3 x 3 board using the" 
-           + " diagonal whack and find path from ...")
+           + " diagonal whack and highligh starting point")
     test = int(input())
     main(test)
 
 
-
-#bv = biv.BitVector(intVal = 8)
-#print (bv)
-
-#for i in range (0, bv.size) :
-#    print (bv[i])
 

@@ -2,6 +2,9 @@ from tkinter import *
 import numpy as np
 from BitVectorIdea import BitBoard
 import BitVector as biv
+import Node 
+import SearchAlgorithm
+import time
 
 
 BLUE_COLOR = "#ADD8E6"
@@ -45,9 +48,13 @@ class LightsOn:
         elif (((eventorigin.char == "x") or (eventorigin.char == "X")) and
               self.playMode == False):
             self.toggleCross()
+        elif (((eventorigin.char == "s") or (eventorigin.char == "S")) and
+              self.playMode == True):
+            self.showSolution()
             
     def toggleCross(self):
         self.orthogonal ^= True
+        self.updateBoard()
     
     def showTutorial(self):
         messagebox.showinfo( "Instructions", 
@@ -62,7 +69,43 @@ class LightsOn:
         adjacent squares get toggled, whereas red is used to indicate that
         the diagonal squares get toggled.
         """)
-     
+        
+    def showSolution(self):
+        print ("Showing solution")
+        self.playMode = False
+        self.level.findAllPossibleTransisitons(diagonalWhack= (not self.orthogonal))
+        search = SearchAlgorithm.SearchAlgorithm(self.level.getSparseAdjacencyMatrix().tolil())
+        startNode = Node.Node(int(self.level.getBitBoard())) # starting from node Node.Node(1) fails
+        endNode = Node.Node(0)
+        path = search.BFS(startNode,endNode)
+        auxBoard = self.level.getBitBoard()
+        if (path[0] == False):
+            board = biv.BitVector(intVal = 0,size = self.size**2 )
+            lastBoard = self.level.getBitBoard()
+            self.flash(lastBoard,board,0.2,color = "#4c4c4c" )                    
+            time.sleep(0.9)
+            print("Done Showing Solution")
+            self.level.setBitBoard(auxBoard)
+            self.updateBoard()
+            self.window.update()
+
+
+        else:    
+            for node in reversed(path[1]):
+                board = biv.BitVector(intVal = node.getNumber(),size = self.size**2 )
+                lastBoard = self.level.getBitBoard()
+                time.sleep(1)
+                self.flash(lastBoard,board,0.2)              
+            
+            time.sleep(0.9)
+            print("Done Showing Solution")
+            self.level.setBitBoard(auxBoard)
+            self.updateBoard()
+            self.window.update()
+            self.playMode = True
+
+
+        
     def goToPlayMode(self):
         self.playMode = True
         
@@ -83,10 +126,21 @@ class LightsOn:
                 self.level.diagonalWhack(r,c)
         
         self.updateBoard()
-        print (self.level.getBitBoard())
+        #print (self.level.getBitBoard())
+        
+    def flash (self, lastState, currentState, duration = 0.2, color = "#98FB98"):
+        for i in range (5):
+            self.level.setBitBoard(lastState)
+            self.updateBoard(color)
+            self.window.update()
+            time.sleep(duration)
+            self.level.setBitBoard(currentState)
+            self.updateBoard(color)
+            self.window.update()
+            time.sleep(duration)
         
         
-    def updateBoard (self):
+    def updateBoard (self, color = None):
         bitBoard = self.level.getBitBoard()
         for i in range (self.size**2):
             r = i//self.size
@@ -96,24 +150,30 @@ class LightsOn:
             x2 = x1 + self.rowh
             y2 = y1 + self.colh
             if (bitBoard[r*self.rows+c] == 1):
-                if (self.orthogonal):
+                if (color is None ):
+                    if (self.orthogonal):
+                        self.canvas.create_rectangle(x1, y1, 
+                                                 x2, y2, 
+                                                 fill=BLUE_COLOR, 
+                                                 outline=BLACK_COLOR)
+                    else :
+                        self.canvas.create_rectangle(x1, y1, 
+                                                 x2, y2, 
+                                                 fill=RED_COLOR, 
+                                                 outline=BLACK_COLOR)
+                else:
                     self.canvas.create_rectangle(x1, y1, 
-                                             x2, y2, 
-                                             fill=BLUE_COLOR, 
-                                             outline=BLACK_COLOR)
-                else :
-                    self.canvas.create_rectangle(x1, y1, 
-                                             x2, y2, 
-                                             fill=RED_COLOR, 
-                                             outline=BLACK_COLOR)
-                    
+                                                 x2, y2, 
+                                                 fill=color, 
+                                                 outline=BLACK_COLOR)
             else:
                 self.canvas.create_rectangle(x1, y1, 
                                      x2, y2, 
                                      fill=GREY_COLOR, 
                                      outline=BLACK_COLOR)
         if (int(bitBoard) == 0):
-            self.endgame()
+            if (self.playMode):
+                self.endgame()
             
     def endgame (self):
         if (self.playMode == True):
@@ -157,6 +217,6 @@ class LightsOn:
         while True:
             self.window.update()
             
-window = LightsOn(3,1000)
+window = LightsOn(4,1000)
 window.drawLines()
 window.mainloop()
