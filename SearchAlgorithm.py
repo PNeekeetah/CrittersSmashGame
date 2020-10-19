@@ -2,7 +2,7 @@
 """
 Created on Sat Oct 10 09:46:29 2020
 
-@author: Nikita
+@author: Nikita Popescu
 """
 
 import queue

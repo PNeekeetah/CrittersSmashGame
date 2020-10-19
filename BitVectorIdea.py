@@ -1,5 +1,7 @@
 """
+Created on Wed Oct  7 19:02:07 2020
 
+@author: Nikita Popescu
 """
 import numpy as np
 import BitVector as biv

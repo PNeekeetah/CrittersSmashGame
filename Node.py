@@ -2,7 +2,7 @@
 """
 Created on Sat Oct 10 21:00:45 2020
 
-@author: Nikita
+@author: Nikita Popescu
 """
 
 class Node:

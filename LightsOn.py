@@ -1,3 +1,9 @@
+"""
+Date : 19.10.2020
+
+@author: Nikita Popescu
+"""
+
 from tkinter import *
 import numpy as np
 from BitVectorIdea import BitBoard

@@ -2,7 +2,7 @@
 """
 Created on Wed Oct  7 19:02:07 2020
 
-@author: Nikita
+@author: Nikita Popescu
 """
 import numpy as np
 from random import randint
